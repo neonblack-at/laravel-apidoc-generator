@@ -570,5 +570,48 @@ abstract class GeneratorTestCase extends TestCase
         $this->assertEquals('value', $responseContent['header']);
     }
 
+
+    /** @test */
+    public function appends_authorization_headers_to_authenticated()
+    {
+        $route = $this->createRoute('GET', '/api/test', 'withAuthenticatedTag');
+
+        $rules = [
+            'authenticated' => [
+                'headers' => [
+                    'authorization' => 'Bearer {token}'
+                ]
+            ],
+            'headers' => [
+                'header' => 'value',
+            ],
+            'response_calls' => [
+                'methods' => ['*'],
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'header' => 'value',
+                ],
+                'bindings' => [
+                    '{id}' => 3,
+                ],
+                'env' => [
+                    'APP_ENV' => 'documentation',
+                ],
+                'query' => [
+                    'queryParam' => 'queryValue',
+                ],
+                'body' => [
+                    'bodyParam' => 'bodyValue',
+                ],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route, $rules);
+        $headers = $parsed['headers'];
+
+        $this->assertArrayHasKey('authorization', $headers);
+        $this->assertEquals($headers['authorization'], 'Bearer {token}');
+    }
+
     abstract public function createRoute(string $httpMethod, string $path, string $controllerMethod, $register = false);
 }

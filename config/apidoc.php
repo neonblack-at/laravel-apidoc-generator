@@ -101,6 +101,15 @@ return [
                 ],
 
                 /*
+                 * Specify headers to be added to routes that are marked with as @authenticated
+                 */
+                'authenticated' => [
+                    'headers' => [
+                        'Authorization' => 'Bearer {token}'
+                    ]
+                ],
+
+                /*
                  * If no @response or @transformer declarations are found for the route,
                  * we'll try to get a sample response by attempting an API call.
                  * Configure the settings for the API call here,
