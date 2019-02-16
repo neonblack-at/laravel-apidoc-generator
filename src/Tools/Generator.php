@@ -3,6 +3,7 @@
 namespace Mpociot\ApiDoc\Tools;
 
 use Faker\Factory;
+use Illuminate\Support\Arr;
 use ReflectionClass;
 use ReflectionMethod;
 use Illuminate\Routing\Route;
@@ -71,6 +72,14 @@ class Generator
             'response' => $content,
             'showresponse' => ! empty($content),
         ];
+
+        if ($parsedRoute['authenticated']) {
+            $rulesToApply['headers'] = array_merge(
+                $rulesToApply['headers'] ?? [],
+                $rulesToApply['authenticated']['headers'] ?? []
+            );
+        }
+
         $parsedRoute['headers'] = $rulesToApply['headers'] ?? [];
 
         return $parsedRoute;
