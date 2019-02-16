@@ -164,6 +164,22 @@ class TestController extends Controller
     }
 
     /**
+     * @resource \Mpociot\ApiDoc\Tests\Fixtures\TestJsonResource
+     */
+    public function resourceTag()
+    {
+        return '';
+    }
+
+    /**
+     * @resourcecollection \Mpociot\ApiDoc\Tests\Fixtures\TestJsonResource
+     */
+    public function resourceCollectionTag()
+    {
+        return '';
+    }
+
+    /**
      * @transformer \Mpociot\ApiDoc\Tests\Fixtures\TestTransformer
      */
     public function transformerTag()
