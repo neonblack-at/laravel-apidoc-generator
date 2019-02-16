@@ -3,6 +3,7 @@
 namespace Mpociot\ApiDoc\Tools;
 
 use Illuminate\Routing\Route;
+use Mpociot\ApiDoc\Tools\ResponseStrategies\ResourceTagsStrategy;
 use Symfony\Component\HttpFoundation\Response;
 use Mpociot\ApiDoc\Tools\ResponseStrategies\ResponseTagStrategy;
 use Mpociot\ApiDoc\Tools\ResponseStrategies\ResponseCallStrategy;
@@ -16,6 +17,7 @@ class ResponseResolver
      */
     public static $strategies = [
         ResponseTagStrategy::class,
+        ResourceTagsStrategy::class,
         TransformerTagsStrategy::class,
         ResponseFileStrategy::class,
         ResponseCallStrategy::class,

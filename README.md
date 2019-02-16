@@ -345,6 +345,44 @@ For the first route above, this package will generate a set of two users then pa
 composer require league/fractal
 ```
 
+#### @resource
+You can define the `JsonResource` that is used for the result of the route using the `@resource` tag (or `@resourceCollection` if the route returns a list). The package will attempt to generate an instance of the model to be handled using the following steps, stopping at the first successful one:
+
+1. Check if there is a `@model` tag in the resource to define the model being handled.
+2. Get an instance of the model from the Eloquent model factory
+3. If the parameter is an Eloquent model, load the first from the database.
+4. Create an instance using `new`.
+
+Finally, it will pass in the model to the resource and display the result of that as the example response.
+
+For example:
+
+```php
+/**
+ * @model \App\User
+ */
+class UserResource extends JsonResource
+{
+    //...
+}
+
+/**
+ * @resourcecollection \App\Http\Resources\UserResource
+ */
+public function listUsers()
+{
+    //...
+}
+
+/**
+ * @resource \App\Http\Resources\UserResource
+ */
+public function showUser(User $user)
+{
+    //...
+}
+```
+
 #### @responseFile
 
 For large response bodies, you may want to use a dump of an actual response. You can put this response in a file (as a JSON string) within your Laravel storage directory and link to it. For instance, we can put this response in a file named `users.get.json` in `storage/responses`:

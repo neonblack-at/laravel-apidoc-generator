@@ -376,6 +376,43 @@ abstract class GeneratorTestCase extends TestCase
     }
 
     /** @test */
+    public function can_parse_resource_tag()
+    {
+        $route = $this->createRoute('GET', '/resourceTag', 'resourceTag');
+        $parsed = $this->generator->processRoute($route);
+        $response = array_first($parsed['response']);
+
+        $this->assertTrue(is_array($parsed));
+        $this->assertArrayHasKey('showresponse', $parsed);
+        $this->assertTrue($parsed['showresponse']);
+        $this->assertTrue(is_array($response));
+        $this->assertEquals(200, $response['status']);
+        $this->assertSame(
+            $response['content'],
+            '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}'
+        );
+    }
+
+    /** @test */
+    public function can_parse_resource_collection_tag()
+    {
+        $route = $this->createRoute('GET', '/resourceCollectionTag', 'resourceCollectionTag');
+        $parsed = $this->generator->processRoute($route);
+        $response = array_first($parsed['response']);
+
+        $this->assertTrue(is_array($parsed));
+        $this->assertArrayHasKey('showresponse', $parsed);
+        $this->assertTrue($parsed['showresponse']);
+        $this->assertTrue(is_array($response));
+        $this->assertEquals(200, $response['status']);
+        $this->assertSame(
+            $response['content'],
+            '{"data":[{"id":1,"description":"Welcome on this test versions","name":"TestName"},'.
+            '{"id":1,"description":"Welcome on this test versions","name":"TestName"}]}'
+        );
+    }
+
+    /** @test */
     public function can_call_route_and_generate_response()
     {
         $route = $this->createRoute('POST', '/shouldFetchRouteResponse', 'shouldFetchRouteResponse', true);
