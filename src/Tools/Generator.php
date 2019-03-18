@@ -93,12 +93,18 @@ class Generator
                 continue;
             }
 
-            $formRequestClassName = version_compare(phpversion(), '7.1.0', '<')
+            $parameterClassName = version_compare(phpversion(), '7.1.0', '<')
                 ? $paramType->__toString()
                 : $paramType->getName();
-            $formRequestClass = new ReflectionClass($formRequestClassName);
-            if ($formRequestClass->isSubclassOf(\Illuminate\Foundation\Http\FormRequest::class)) {
-                $formRequestDocBlock = new DocBlock($formRequestClass->getDocComment());
+
+            try {
+                $parameterClass = new ReflectionClass($parameterClassName);
+            } catch (\ReflectionException $e) {
+                continue;
+            }
+
+            if (class_exists('\Illuminate\Foundation\Http\FormRequest') && $parameterClass->isSubclassOf(\Illuminate\Foundation\Http\FormRequest::class)) {
+                $formRequestDocBlock = new DocBlock($parameterClass->getDocComment());
                 $bodyParametersFromDocBlock = $this->getBodyParametersFromDocBlock($formRequestDocBlock->getTags());
 
                 if (count($bodyParametersFromDocBlock)) {

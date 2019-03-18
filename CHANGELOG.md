@@ -13,6 +13,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+
+## [3.4.3] - Wednesday, 13 March 2019
+### Fixed
+- Ignore scalar type hints when checking for FormRequests (https://github.com/mpociot/laravel-apidoc-generator/pull/474)
+
+## [3.4.2] - Sunday, 10 March 2019
+### Added
+- Ability to set cookies on response calls (https://github.com/mpociot/laravel-apidoc-generator/pull/471)
+
+## [3.4.1] - Monday, 4 March 2019
+### Fixed
+- Support for Lumen 5.7 (https://github.com/mpociot/laravel-apidoc-generator/pull/467)
+
+## [3.4.0] - Wednesday, 27 February 2019
+### Added
+- Support for Laravel 5.8 (https://github.com/mpociot/laravel-apidoc-generator/pull/462)
+- Ability to annotate body parameters on FormRequest (https://github.com/mpociot/laravel-apidoc-generator/pull/460)
+
+
 ## [3.3.2] - Tuesday, 12 February 2019
 ### Added
 - Ability to specify array and object body/query params using dot notation (https://github.com/mpociot/laravel-apidoc-generator/pull/445)
