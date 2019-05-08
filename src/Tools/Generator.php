@@ -16,6 +16,17 @@ class Generator
     use ParamHelpers;
 
     /**
+     * @var string The seed to be used with Faker.
+     * Useful when you want to always have the same fake output.
+     */
+    private $fakerSeed = null;
+
+    public function __construct(string $fakerSeed = null)
+    {
+        $this->fakerSeed = $fakerSeed;
+    }
+
+    /**
      * @param Route $route
      *
      * @return mixed
@@ -51,7 +62,7 @@ class Generator
         $routeGroup = $this->getRouteGroup($controller, $method);
         $docBlock = $this->parseDocBlock($method);
         $bodyParameters = $this->getBodyParameters($method, $docBlock['tags']);
-        $queryParameters = $this->getQueryParametersFromDocBlock($docBlock['tags']);
+        $queryParameters = $this->getQueryParameters($method, $docBlock['tags']);
         $content = ResponseResolver::getResponse($route, $docBlock['tags'], [
             'rules' => $rulesToApply,
             'body' => $bodyParameters,
@@ -65,9 +76,11 @@ class Generator
             'description' => $docBlock['long'],
             'methods' => $this->getMethods($route),
             'uri' => $this->getUri($route),
+            'boundUri' => Utils::getFullUrl($route, $rulesToApply['bindings'] ?? []),
+            'queryParameters' => $queryParameters,
             'bodyParameters' => $bodyParameters,
             'cleanBodyParameters' => $this->cleanParams($bodyParameters),
-            'queryParameters' => $queryParameters,
+            'cleanQueryParameters' => $this->cleanParams($queryParameters),
             'authenticated' => $this->getAuthStatusFromDocBlock($docBlock['tags']),
             'response' => $content,
             'showresponse' => ! empty($content),
@@ -103,7 +116,7 @@ class Generator
                 continue;
             }
 
-            if (class_exists('\Illuminate\Foundation\Http\FormRequest') && $parameterClass->isSubclassOf(\Illuminate\Foundation\Http\FormRequest::class)) {
+            if (class_exists('\Illuminate\Foundation\Http\FormRequest') && $parameterClass->isSubclassOf(\Illuminate\Foundation\Http\FormRequest::class) || class_exists('\Dingo\Api\Http\FormRequest') && $parameterClass->isSubclassOf(\Dingo\Api\Http\FormRequest::class)) {
                 $formRequestDocBlock = new DocBlock($parameterClass->getDocComment());
                 $bodyParametersFromDocBlock = $this->getBodyParametersFromDocBlock($formRequestDocBlock->getTags());
 
@@ -152,6 +165,43 @@ class Generator
             })->toArray();
 
         return $parameters;
+    }
+
+    /**
+     * @param ReflectionMethod $method
+     * @param array $tags
+     *
+     * @return array
+     */
+    protected function getQueryParameters(ReflectionMethod $method, array $tags)
+    {
+        foreach ($method->getParameters() as $param) {
+            $paramType = $param->getType();
+            if ($paramType === null) {
+                continue;
+            }
+
+            $parameterClassName = version_compare(phpversion(), '7.1.0', '<')
+                ? $paramType->__toString()
+                : $paramType->getName();
+
+            try {
+                $parameterClass = new ReflectionClass($parameterClassName);
+            } catch (\ReflectionException $e) {
+                continue;
+            }
+
+            if (class_exists('\Illuminate\Foundation\Http\FormRequest') && $parameterClass->isSubclassOf(\Illuminate\Foundation\Http\FormRequest::class) || class_exists('\Dingo\Api\Http\FormRequest') && $parameterClass->isSubclassOf(\Dingo\Api\Http\FormRequest::class)) {
+                $formRequestDocBlock = new DocBlock($parameterClass->getDocComment());
+                $queryParametersFromDocBlock = $this->getQueryParametersFromDocBlock($formRequestDocBlock->getTags());
+
+                if (count($queryParametersFromDocBlock)) {
+                    return $queryParametersFromDocBlock;
+                }
+            }
+        }
+
+        return $this->getQueryParametersFromDocBlock($tags);
     }
 
     /**
@@ -256,7 +306,7 @@ class Generator
             }
         }
 
-        return 'general';
+        return config('apidoc.default_group', 'general');
     }
 
     private function normalizeParameterType($type)
@@ -273,9 +323,12 @@ class Generator
     private function generateDummyValue(string $type)
     {
         $faker = Factory::create();
-        $fakes = [
-            'integer' => function () {
-                return rand(1, 20);
+        if ($this->fakerSeed) {
+            $faker->seed($this->fakerSeed);
+        }
+        $fakeFactories = [
+            'integer' => function () use ($faker) {
+                return $faker->numberBetween(1, 20);
             },
             'number' => function () use ($faker) {
                 return $faker->randomFloat();
@@ -287,7 +340,7 @@ class Generator
                 return $faker->boolean();
             },
             'string' => function () use ($faker) {
-                return str_random();
+                return $faker->word;
             },
             'array' => function () {
                 return [];
@@ -297,9 +350,9 @@ class Generator
             },
         ];
 
-        $fake = $fakes[$type] ?? $fakes['string'];
+        $fakeFactory = $fakeFactories[$type] ?? $fakeFactories['string'];
 
-        return $fake();
+        return $fakeFactory();
     }
 
     /**

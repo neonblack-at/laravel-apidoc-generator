@@ -13,6 +13,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [3.7.0] - Thursday, 2 May 2019
+### Added
+- Support for `@queryParams` in Dingo FormRequests (https://github.com/mpociot/laravel-apidoc-generator/pull/506)
+- Easier customisation of example languages (https://github.com/mpociot/laravel-apidoc-generator/commit/0aa737a2e54a913eab4d024a1644c5ddd5dee8b8)
+- Include PHP as example language (https://github.com/mpociot/laravel-apidoc-generator/commit/c5814762fa52095fe645716554839b6ae110ef89)
+
+## [3.6.0] - Monday, 29 April 2019
+### Added
+- Support for `@queryParams` in FormRequests (https://github.com/mpociot/laravel-apidoc-generator/pull/504)
+- Added `default_group` key to replace `ungrouped_name` (https://github.com/mpociot/laravel-apidoc-generator/commit/72b5f546c1b84e69fe43c720a04f448c3b96e345)
+
+## [3.5.0] - Tuesday, 23 April 2019
+### Added
+- Option to seed faker for deterministic output (https://github.com/mpociot/laravel-apidoc-generator/pull/503)
+- Support for binding prefixes (https://github.com/mpociot/laravel-apidoc-generator/pull/498)
+- Ability to override Laravel `config` (https://github.com/mpociot/laravel-apidoc-generator/pull/496)
+- Allow override of the name 'general' for ungrouped routes (https://github.com/mpociot/laravel-apidoc-generator/pull/491)
+
+### Changed
+- Use parameter-bound URL in doc examples (https://github.com/mpociot/laravel-apidoc-generator/pull/500)
+
+### Fixed
+- Request router now matches when router has sub-domain (https://github.com/mpociot/laravel-apidoc-generator/pull/493)
+
+## [3.4.4] - Saturday, 30 March 2019
+### Fixed
+- Allow users specify custom Content-type header for Markdown examples (https://github.com/mpociot/laravel-apidoc-generator/pull/486)
 
 ## [3.4.3] - Wednesday, 13 March 2019
 ### Fixed

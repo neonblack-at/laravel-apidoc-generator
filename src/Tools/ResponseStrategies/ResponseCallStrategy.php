@@ -6,6 +6,7 @@ use Dingo\Api\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Route;
+use Mpociot\ApiDoc\Tools\Utils;
 use Mpociot\ApiDoc\Tools\Traits\ParamHelpers;
 
 /**
@@ -52,6 +53,7 @@ class ResponseCallStrategy
     {
         $this->startDbTransaction();
         $this->setEnvironmentVariables($rulesToApply['env'] ?? []);
+        $this->setLaravelConfigs($rulesToApply['config'] ?? []);
     }
 
     /**
@@ -64,7 +66,7 @@ class ResponseCallStrategy
      */
     private function prepareRequest(Route $route, array $rulesToApply, array $bodyParams, array $queryParams)
     {
-        $uri = $this->replaceUrlParameterBindings($route, $rulesToApply['bindings'] ?? []);
+        $uri = Utils::getFullUrl($route, $rulesToApply['bindings'] ?? []);
         $routeMethods = $this->getMethods($route);
         $method = array_shift($routeMethods);
         $cookies = isset($rulesToApply['cookies']) ? $rulesToApply['cookies'] : [];
@@ -82,30 +84,11 @@ class ResponseCallStrategy
     }
 
     /**
-     * Transform parameters in URLs into real values (/users/{user} -> /users/2).
-     * Uses bindings specified by caller, otherwise just uses '1'.
-     *
-     * @param Route $route
-     * @param array $bindings
-     *
-     * @return mixed
-     */
-    protected function replaceUrlParameterBindings(Route $route, $bindings)
-    {
-        $uri = $route->uri();
-        foreach ($bindings as $parameter => $binding) {
-            $uri = str_replace($parameter, $binding, $uri);
-        }
-        // Replace any unbound parameters with '1'
-        $uri = preg_replace('/{(.*?)}/', 1, $uri);
-
-        return $uri;
-    }
-
-    /**
-     * @param array $env
+     * @param array $config
      *
      * @return void
+     *
+     * @deprecated in favour of Laravel config variables
      */
     private function setEnvironmentVariables(array $env)
     {
@@ -114,6 +97,22 @@ class ResponseCallStrategy
 
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
+        }
+    }
+
+    /**
+     * @param array $config
+     *
+     * @return void
+     */
+    private function setLaravelConfigs(array $config)
+    {
+        if (empty($config)) {
+            return;
+        }
+
+        foreach ($config as $name => $value) {
+            config([$name => $value]);
         }
     }
 
@@ -203,6 +202,9 @@ class ResponseCallStrategy
     {
         // set the proper domain
         if ($route->getDomain()) {
+            $request->headers->add([
+                'HOST' => $route->getDomain(),
+            ]);
             $request->server->add([
                 'HTTP_HOST' => $route->getDomain(),
                 'SERVER_NAME' => $route->getDomain(),

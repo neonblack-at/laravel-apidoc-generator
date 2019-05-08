@@ -4,6 +4,7 @@ return [
 
     /*
      * The output path for the generated documentation.
+     * This path should be relative to the root of your application.
      */
     'output' => 'public/docs',
 
@@ -112,7 +113,7 @@ return [
                 /*
                  * If no @response or @transformer declarations are found for the route,
                  * we'll try to get a sample response by attempting an API call.
-                 * Configure the settings for the API call here,
+                 * Configure the settings for the API call here.
                  */
                 'response_calls' => [
                     /*
@@ -124,21 +125,27 @@ return [
                     /*
                      * For URLs which have parameters (/users/{user}, /orders/{id?}),
                      * specify what values the parameters should be replaced with.
-                     * Note that you must specify the full parameter, including curly brackets and question marks if any.
+                     * Note that you must specify the full parameter,
+                     * including curly brackets and question marks if any.
+                     *
+                     * You may also specify the preceding path, to allow for variations,
+                     * for instance 'users/{id}' => 1 and 'apps/{id}' => 'htTviP'.
+                     * However, there must only be one parameter per path.
                      */
                     'bindings' => [
-                        // '{user}' => 1
+                        // '{user}' => 1,
                     ],
 
                     /*
-                     * Environment variables which should be set for the API call.
+                     * Laravel config variables which should be set for the API call.
                      * This is a good place to ensure that notifications, emails
-                     * and other external services are not triggered during the documentation API calls
+                     * and other external services are not triggered
+                     * during the documentation API calls
                      */
-                    'env' => [
-                        'APP_ENV' => 'documentation',
-                        'APP_DEBUG' => false,
-                        // 'env_var' => 'value',
+                    'config' => [
+                        'app.env' => 'documentation',
+                        'app.debug' => false,
+                        // 'service.key' => 'value',
                     ],
 
                     /*
@@ -176,31 +183,51 @@ return [
     ],
 
     /*
-     * Custom logo path. Will be copied during generate command. Set this to false to use the default logo.
+     * Custom logo path. The logo will be copied from this location
+     * during the generate process. Set this to false to use the default logo.
      *
      * Change to an absolute path to use your custom logo. For example:
      * 'logo' => resource_path('views') . '/api/logo.png'
      *
      * If you want to use this, please be aware of the following rules:
-     * - size: 230 x 52
+     * - the image size must be 230 x 52
      */
     'logo' => false,
+
+    /*
+     * Name for the group of routes which do not have a @group set.
+     */
+    'default_group' => 'general',
+
+    /*
+     * Example requests for each endpoint will be shown in each of these languages.
+     * Supported options are: bash, javascript, php
+     * You can add a language of your own, but you must publish the package's views
+     * and define a corresponding view for it in the partials/example-requests directory.
+     * See https://laravel-apidoc-generator.readthedocs.io/en/latest/generating-documentation.html
+     *
+     */
+    'example_languages' => [
+        'bash',
+        'javascript',
+    ],
 
     /*
      * Configure how responses are transformed using @transformer and @transformerCollection
      * Requires league/fractal package: composer require league/fractal
      *
-     * If you are using a custom serializer with league/fractal,
-     * you can specify it here.
-     *
-     * Serializers included with league/fractal:
-     * - \League\Fractal\Serializer\ArraySerializer::class
-     * - \League\Fractal\Serializer\DataArraySerializer::class
-     * - \League\Fractal\Serializer\JsonApiSerializer::class
-     *
-     * Leave as null to use no serializer or return a simple JSON.
      */
     'fractal' => [
+        /* If you are using a custom serializer with league/fractal,
+         * you can specify it here.
+         *
+         * Serializers included with league/fractal:
+         * - \League\Fractal\Serializer\ArraySerializer::class
+         * - \League\Fractal\Serializer\DataArraySerializer::class
+         * - \League\Fractal\Serializer\JsonApiSerializer::class
+         *
+         * Leave as null to use no serializer or return a simple JSON.
+         */
         'serializer' => null,
     ],
 ];

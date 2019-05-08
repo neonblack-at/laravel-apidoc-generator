@@ -30,7 +30,6 @@ Welcome to the generated API reference.
 curl -X GET -G "http://localhost/api/users" \
     -H "Accept: application/json"
 ```
-
 ```javascript
 const url = new URL("http://localhost/api/users");
 
@@ -70,7 +69,6 @@ fetch(url, {
 curl -X GET -G "http://localhost/api/users/create" \
     -H "Accept: application/json"
 ```
-
 ```javascript
 const url = new URL("http://localhost/api/users/create");
 
@@ -110,7 +108,6 @@ fetch(url, {
 curl -X POST "http://localhost/api/users" \
     -H "Accept: application/json"
 ```
-
 ```javascript
 const url = new URL("http://localhost/api/users");
 
@@ -140,12 +137,11 @@ fetch(url, {
 > Example request:
 
 ```bash
-curl -X GET -G "http://localhost/api/users/{user}" \
+curl -X GET -G "http://localhost/api/users/1" \
     -H "Accept: application/json"
 ```
-
 ```javascript
-const url = new URL("http://localhost/api/users/{user}");
+const url = new URL("http://localhost/api/users/1");
 
 let headers = {
     "Accept": "application/json",
@@ -180,12 +176,11 @@ fetch(url, {
 > Example request:
 
 ```bash
-curl -X GET -G "http://localhost/api/users/{user}/edit" \
+curl -X GET -G "http://localhost/api/users/1/edit" \
     -H "Accept: application/json"
 ```
-
 ```javascript
-const url = new URL("http://localhost/api/users/{user}/edit");
+const url = new URL("http://localhost/api/users/1/edit");
 
 let headers = {
     "Accept": "application/json",
@@ -220,12 +215,11 @@ fetch(url, {
 > Example request:
 
 ```bash
-curl -X PUT "http://localhost/api/users/{user}" \
+curl -X PUT "http://localhost/api/users/1" \
     -H "Accept: application/json"
 ```
-
 ```javascript
-const url = new URL("http://localhost/api/users/{user}");
+const url = new URL("http://localhost/api/users/1");
 
 let headers = {
     "Accept": "application/json",
@@ -255,12 +249,11 @@ fetch(url, {
 > Example request:
 
 ```bash
-curl -X DELETE "http://localhost/api/users/{user}" \
+curl -X DELETE "http://localhost/api/users/1" \
     -H "Accept: application/json"
 ```
-
 ```javascript
-const url = new URL("http://localhost/api/users/{user}");
+const url = new URL("http://localhost/api/users/1");
 
 let headers = {
     "Accept": "application/json",
