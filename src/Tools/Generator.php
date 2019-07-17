@@ -16,14 +16,14 @@ class Generator
     use ParamHelpers;
 
     /**
-     * @var string The seed to be used with Faker.
-     * Useful when you want to always have the same fake output.
+     * @var DocumentationConfig
      */
-    private $fakerSeed = null;
+    private $config;
 
-    public function __construct(string $fakerSeed = null)
+    public function __construct(DocumentationConfig $config = null)
     {
-        $this->fakerSeed = $fakerSeed;
+        // If no config is injected, pull from global
+        $this->config = $config ?: new DocumentationConfig(config('apidoc'));
     }
 
     /**
@@ -54,8 +54,7 @@ class Generator
      */
     public function processRoute(Route $route, array $rulesToApply = [])
     {
-        $routeAction = $route->getAction();
-        list($class, $method) = explode('@', $routeAction['uses']);
+        list($class, $method) = Utils::getRouteActionUses($route->getAction());
         $controller = new ReflectionClass($class);
         $method = $controller->getMethod($method);
 
@@ -76,7 +75,7 @@ class Generator
             'description' => $docBlock['long'],
             'methods' => $this->getMethods($route),
             'uri' => $this->getUri($route),
-            'boundUri' => Utils::getFullUrl($route, $rulesToApply['bindings'] ?? []),
+            'boundUri' => Utils::getFullUrl($route, $rulesToApply['bindings'] ?? ($rulesToApply['response_calls']['bindings'] ?? [])),
             'queryParameters' => $queryParameters,
             'bodyParameters' => $bodyParameters,
             'cleanBodyParameters' => $this->cleanParams($bodyParameters),
@@ -306,7 +305,7 @@ class Generator
             }
         }
 
-        return config('apidoc.default_group', 'general');
+        return $this->config->get(('default_group'));
     }
 
     private function normalizeParameterType($type)
@@ -323,8 +322,8 @@ class Generator
     private function generateDummyValue(string $type)
     {
         $faker = Factory::create();
-        if ($this->fakerSeed) {
-            $faker->seed($this->fakerSeed);
+        if ($this->config->get('faker_seed')) {
+            $faker->seed($this->config->get('faker_seed'));
         }
         $fakeFactories = [
             'integer' => function () use ($faker) {

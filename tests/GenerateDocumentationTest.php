@@ -4,12 +4,10 @@ namespace Mpociot\ApiDoc\Tests;
 
 use ReflectionException;
 use Illuminate\Support\Str;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
+use Mpociot\ApiDoc\Tools\Utils;
 use Orchestra\Testbench\TestCase;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Contracts\Console\Kernel;
 use Mpociot\ApiDoc\Tests\Fixtures\TestController;
 use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 use Illuminate\Support\Facades\Route as RouteFacade;
@@ -19,6 +17,8 @@ use Mpociot\ApiDoc\Tests\Fixtures\TestPartialResourceController;
 
 class GenerateDocumentationTest extends TestCase
 {
+    use TestHelpers;
+
     /**
      * Setup the test environment.
      */
@@ -29,20 +29,7 @@ class GenerateDocumentationTest extends TestCase
 
     public function tearDown()
     {
-        // delete the generated docs - compatible cross-platform
-        $dir = __DIR__.'/../public/docs';
-        if (is_dir($dir)) {
-            $files = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
-
-            foreach ($files as $fileinfo) {
-                $todo = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
-                $todo($fileinfo->getRealPath());
-            }
-            rmdir($dir);
-        }
+        Utils::deleteDirectoryAndContents('/public/docs');
     }
 
     /**
@@ -91,6 +78,35 @@ class GenerateDocumentationTest extends TestCase
 
         $this->assertContains('Skipping route: [GET] closure', $output);
         $this->assertContains('Processed route: [GET] test', $output);
+    }
+
+    /** @test */
+    public function console_command_work_with_routes_uses_array()
+    {
+        RouteFacade::get('/api/array/test', [TestController::class, 'withEndpointDescription']);
+
+        config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
+        $output = $this->artisan('apidoc:generate');
+
+        $this->assertNotContains('Skipping route: [GET] api/array/test', $output);
+        $this->assertContains('Processed route: [GET] api/array/test', $output);
+    }
+
+    /** @test */
+    public function console_command_work_with_dingo_routes_uses_array()
+    {
+        $api = app(\Dingo\Api\Routing\Router::class);
+        $api->version('v1', function ($api) {
+            $api->get('/array/dingo/test', [TestController::class, 'withEndpointDescription']);
+        });
+
+        config(['apidoc.router' => 'dingo']);
+        config(['apidoc.routes.0.match.prefixes' => ['*']]);
+        config(['apidoc.routes.0.match.versions' => ['v1']]);
+        $output = $this->artisan('apidoc:generate');
+
+        $this->assertNotContains('Skipping route: [GET] array/dingo/test', $output);
+        $this->assertContains('Processed route: [GET] array/dingo/test', $output);
     }
 
     /** @test */
@@ -177,6 +193,8 @@ class GenerateDocumentationTest extends TestCase
         RouteFacade::get('/api/withBodyParameters', TestController::class.'@withBodyParameters');
         RouteFacade::get('/api/withAuthTag', TestController::class.'@withAuthenticatedTag');
 
+        // We want to have the same values for params each time
+        config(['apidoc.faker_seed' => 1234]);
         config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
         config([
             'apidoc.routes.0.apply.headers' => [
@@ -190,7 +208,6 @@ class GenerateDocumentationTest extends TestCase
         $compareMarkdown = __DIR__.'/../public/docs/source/.compare.md';
         $fixtureMarkdown = __DIR__.'/Fixtures/index.md';
 
-        $this->markTestSkipped('Test is non-deterministic since example values for body parameters are random.');
         $this->assertFilesHaveSameContent($fixtureMarkdown, $generatedMarkdown);
         $this->assertFilesHaveSameContent($fixtureMarkdown, $compareMarkdown);
     }
@@ -225,9 +242,10 @@ class GenerateDocumentationTest extends TestCase
         config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
         $this->artisan('apidoc:generate');
 
-        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'));
-        $generatedCollection->info->_postman_id = '';
-        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection.json'));
+        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'), true);
+        // The Postman ID varies from call to call; erase it to make the test data reproducible.
+        $generatedCollection['info']['_postman_id'] = '';
+        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection.json'), true);
         $this->assertEquals($generatedCollection, $fixtureCollection);
     }
 
@@ -237,7 +255,7 @@ class GenerateDocumentationTest extends TestCase
         $domain = 'http://somedomain.test';
         RouteFacade::get('/api/test', TestController::class.'@withEndpointDescription');
 
-        config(['app.url' => $domain]);
+        config(['apidoc.base_url' => $domain]);
         config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
         $this->artisan('apidoc:generate');
 
@@ -249,16 +267,69 @@ class GenerateDocumentationTest extends TestCase
     /** @test */
     public function generated_postman_collection_can_have_custom_url()
     {
-        Config::set('app.url', 'http://yourapp.app');
+        Config::set('apidoc.base_url', 'http://yourapp.app');
         RouteFacade::get('/api/test', TestController::class.'@withEndpointDescription');
         RouteFacade::post('/api/responseTag', TestController::class.'@withResponseTag');
 
         config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
         $this->artisan('apidoc:generate');
 
-        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'));
-        $generatedCollection->info->_postman_id = '';
-        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection_updated_url.json'));
+        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'), true);
+        // The Postman ID varies from call to call; erase it to make the test data reproducible.
+        $generatedCollection['info']['_postman_id'] = '';
+        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection_updated_url.json'), true);
+        $this->assertEquals($generatedCollection, $fixtureCollection);
+    }
+
+    /** @test */
+    public function generated_postman_collection_can_append_custom_http_headers()
+    {
+        RouteFacade::get('/api/headers', TestController::class.'@checkCustomHeaders');
+        config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
+        config([
+            'apidoc.routes.0.apply.headers' => [
+                'Authorization' => 'customAuthToken',
+                'Custom-Header' => 'NotSoCustom',
+            ],
+        ]);
+        $this->artisan('apidoc:generate');
+
+        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'), true);
+        // The Postman ID varies from call to call; erase it to make the test data reproducible.
+        $generatedCollection['info']['_postman_id'] = '';
+        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection_with_custom_headers.json'), true);
+        $this->assertEquals($generatedCollection, $fixtureCollection);
+    }
+
+    /** @test */
+    public function generated_postman_collection_can_have_query_parameters()
+    {
+        RouteFacade::get('/api/withQueryParameters', TestController::class.'@withQueryParameters');
+        // We want to have the same values for params each time
+        config(['apidoc.faker_seed' => 1234]);
+        config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
+        $this->artisan('apidoc:generate');
+
+        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'), true);
+        // The Postman ID varies from call to call; erase it to make the test data reproducible.
+        $generatedCollection['info']['_postman_id'] = '';
+        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection_with_query_parameters.json'), true);
+        $this->assertEquals($generatedCollection, $fixtureCollection);
+    }
+
+    /** @test */
+    public function generated_postman_collection_can_add_body_parameters()
+    {
+        RouteFacade::get('/api/withBodyParameters', TestController::class.'@withBodyParameters');
+        // We want to have the same values for params each time
+        config(['apidoc.faker_seed' => 1234]);
+        config(['apidoc.routes.0.match.prefixes' => ['api/*']]);
+        $this->artisan('apidoc:generate');
+
+        $generatedCollection = json_decode(file_get_contents(__DIR__.'/../public/docs/collection.json'), true);
+        // The Postman ID varies from call to call; erase it to make the test data reproducible.
+        $generatedCollection['info']['_postman_id'] = '';
+        $fixtureCollection = json_decode(file_get_contents(__DIR__.'/Fixtures/collection_with_body_parameters.json'), true);
         $this->assertEquals($generatedCollection, $fixtureCollection);
     }
 
@@ -335,50 +406,5 @@ class GenerateDocumentationTest extends TestCase
         $generatedMarkdown = file_get_contents(__DIR__.'/../public/docs/source/index.md');
         $this->assertContains('Group A', $generatedMarkdown);
         $this->assertContains('Group B', $generatedMarkdown);
-    }
-
-    /**
-     * @param string $command
-     * @param array $parameters
-     *
-     * @return mixed
-     */
-    public function artisan($command, $parameters = [])
-    {
-        $this->app[Kernel::class]->call($command, $parameters);
-
-        return $this->app[Kernel::class]->output();
-    }
-
-    private function assertFilesHaveSameContent($pathToExpected, $pathToActual)
-    {
-        $actual = $this->getFileContents($pathToActual);
-        $expected = $this->getFileContents($pathToExpected);
-        $this->assertSame($expected, $actual);
-    }
-
-    /**
-     * Get the contents of a file in a cross-platform-compatible way.
-     *
-     * @param $path
-     *
-     * @return string
-     */
-    private function getFileContents($path)
-    {
-        return str_replace("\r\n", "\n", file_get_contents($path));
-    }
-
-    /**
-     * Assert that a string contains another string, ignoring all whitespace.
-     *
-     * @param $needle
-     * @param $haystack
-     */
-    private function assertContainsIgnoringWhitespace($needle, $haystack)
-    {
-        $haystack = preg_replace('/\s/', '', $haystack);
-        $needle = preg_replace('/\s/', '', $needle);
-        $this->assertContains($needle, $haystack);
     }
 }

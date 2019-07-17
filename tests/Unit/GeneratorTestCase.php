@@ -5,6 +5,7 @@ namespace Mpociot\ApiDoc\Tests\Unit;
 use Orchestra\Testbench\TestCase;
 use Mpociot\ApiDoc\Tools\Generator;
 use Illuminate\Support\Facades\Storage;
+use Mpociot\ApiDoc\Tools\DocumentationConfig;
 use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 
 abstract class GeneratorTestCase extends TestCase
@@ -347,20 +348,6 @@ abstract class GeneratorTestCase extends TestCase
         );
     }
 
-    public function dataResources()
-    {
-        return [
-            [
-                null,
-                '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}',
-            ],
-            [
-                'League\Fractal\Serializer\JsonApiSerializer',
-                '{"data":{"type":null,"id":"1","attributes":{"description":"Welcome on this test versions","name":"TestName"}}}',
-            ],
-        ];
-    }
-
     /** @test */
     public function can_parse_transformer_tag_with_model()
     {
@@ -486,6 +473,104 @@ abstract class GeneratorTestCase extends TestCase
     }
 
     /** @test */
+    public function can_override_config_during_response_call()
+    {
+        $route = $this->createRoute('POST', '/echoesConfig', 'echoesConfig', true);
+
+        $rules = [
+            'response_calls' => [
+                'methods' => ['*'],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $originalValue = $response['app.env'];
+
+        $now = time();
+        $rules = [
+            'response_calls' => [
+                'methods' => ['*'],
+                'config' => [
+                    'app.env' => $now,
+                ],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $newValue = $response['app.env'];
+        $this->assertEquals($now, $newValue);
+        $this->assertNotEquals($originalValue, $newValue);
+    }
+
+    /** @test */
+    public function can_override_url_path_parameters_with_bindings()
+    {
+        $route = $this->createRoute('POST', '/echoesUrlPathParameters/{param}', 'echoesUrlPathParameters', true);
+
+        $rand = rand();
+        $rules = [
+            'response_calls' => [
+                'methods' => ['*'],
+                'bindings' => [
+                    '{param}' => $rand,
+                ],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $param = $response['param'];
+        $this->assertEquals($rand, $param);
+    }
+
+    /** @test */
+    public function replaces_optional_url_path_parameters_with_bindings()
+    {
+        $route = $this->createRoute('POST', '/echoesUrlPathParameters/{param?}', 'echoesUrlPathParameters', true);
+
+        $rand = rand();
+        $rules = [
+            'response_calls' => [
+                'methods' => ['*'],
+                'bindings' => [
+                    '{param?}' => $rand,
+                ],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $param = $response['param'];
+        $this->assertEquals($rand, $param);
+    }
+
+    /** @test */
+    public function uses_correct_bindings_by_prefix()
+    {
+        $route1 = $this->createRoute('POST', '/echoesUrlPathParameters/first/{param}', 'echoesUrlPathParameters', true);
+        $route2 = $this->createRoute('POST', '/echoesUrlPathParameters/second/{param}', 'echoesUrlPathParameters', true);
+
+        $rand1 = rand();
+        $rand2 = rand();
+        $rules = [
+            'response_calls' => [
+                'methods' => ['*'],
+                'bindings' => [
+                    'first/{param}' => $rand1,
+                    'second/{param}' => $rand2,
+                ],
+            ],
+        ];
+        $parsed = $this->generator->processRoute($route1, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $param = $response['param'];
+        $this->assertEquals($rand1, $param);
+
+        $parsed = $this->generator->processRoute($route2, $rules);
+        $response = json_decode(array_first($parsed['response'])['content'], true);
+        $param = $response['param'];
+        $this->assertEquals($rand2, $param);
+    }
+
+    /** @test */
     public function can_parse_response_file_tag()
     {
         // copy file to storage
@@ -570,6 +655,31 @@ abstract class GeneratorTestCase extends TestCase
     }
 
     /** @test */
+    public function generates_consistent_examples_when_faker_seed_is_set()
+    {
+        $route = $this->createRoute('GET', '/withBodyParameters', 'withBodyParameters');
+
+        $paramName = 'room_id';
+        $results = [];
+        $results[$this->generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$this->generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$this->generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$this->generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$this->generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        // Examples should have different values
+        $this->assertNotEquals(count($results), 1);
+
+        $generator = new Generator(new DocumentationConfig(['faker_seed' => 12345]));
+        $results = [];
+        $results[$generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        $results[$generator->processRoute($route)['cleanBodyParameters'][$paramName]] = true;
+        // Examples should have same values
+        $this->assertEquals(count($results), 1);
+    }
+
+    /** @test */
     public function uses_configured_settings_when_calling_route()
     {
         $route = $this->createRoute('PUT', '/echo/{id}', 'shouldFetchRouteResponseWithEchoedSettings', true);
@@ -584,9 +694,6 @@ abstract class GeneratorTestCase extends TestCase
                 ],
                 'bindings' => [
                     '{id}' => 3,
-                ],
-                'env' => [
-                    'APP_ENV' => 'documentation',
                 ],
                 'query' => [
                     'queryParam' => 'queryValue',
@@ -606,7 +713,6 @@ abstract class GeneratorTestCase extends TestCase
         $this->assertEquals(200, $response['status']);
         $responseContent = json_decode($response['content'], true);
         $this->assertEquals(3, $responseContent['{id}']);
-        $this->assertEquals('documentation', $responseContent['APP_ENV']);
         $this->assertEquals('queryValue', $responseContent['queryParam']);
         $this->assertEquals('bodyValue', $responseContent['bodyParam']);
         $this->assertEquals('value', $responseContent['header']);
@@ -655,5 +761,32 @@ abstract class GeneratorTestCase extends TestCase
         $this->assertEquals($headers['authorization'], 'Bearer {token}');
     }
 
+    /** @test */
+    public function can_use_arrays_in_routes_uses()
+    {
+        $route = $this->createRouteUsesArray('GET', '/api/array/test', 'withEndpointDescription');
+
+        $parsed = $this->generator->processRoute($route);
+
+        $this->assertSame('Example title.', $parsed['title']);
+        $this->assertSame("This will be the long description.\nIt can also be multiple lines long.", $parsed['description']);
+    }
+
     abstract public function createRoute(string $httpMethod, string $path, string $controllerMethod, $register = false);
+
+    abstract public function createRouteUsesArray(string $httpMethod, string $path, string $controllerMethod, $register = false);
+
+    public function dataResources()
+    {
+        return [
+            [
+                null,
+                '{"data":{"id":1,"description":"Welcome on this test versions","name":"TestName"}}',
+            ],
+            [
+                'League\Fractal\Serializer\JsonApiSerializer',
+                '{"data":{"type":null,"id":"1","attributes":{"description":"Welcome on this test versions","name":"TestName"}}}',
+            ],
+        ];
+    }
 }

@@ -8,6 +8,9 @@ This is the file path where the generated documentation will be written to. Note
 ## `router`
 The router to use when processing your routes (can be Laravel or Dingo. Defaults to **Laravel**)
 
+## `base_url`
+The base URL to be used in examples and the Postman collection. By default, this will be the value of config('app.url').
+
 ## `postman`
 This package can automatically generate a Postman collection for your routes, along with the documentation. This section is where you can configure (or disable) that.
 
@@ -32,7 +35,7 @@ If you want to use this, please note that the image size must be 230 x 52.
 When [documenting your api](documenting.md), you use `@group` annotations to group API endpoints. Endpoints which do not have a ggroup annotation will be grouped under the `default_group`. Defaults to **"general"**.
 
 ## `example_languages`
-For each endpoint, an example request is shown in each of the languages specified in this array. Currently only `bash`, `javascript` and `php` are supported. You can add your own language, but you must also define the corresponding view (see [Specifying languages for examples](generating-documentation.html#specifying-language-for-examples)). Default: `["bash", "javascript"]` 
+For each endpoint, an example request is shown in each of the languages specified in this array. Currently only `bash`, `javascript`, `php` and `python` are supported. You can add your own language, but you must also define the corresponding view (see [Specifying languages for examples](generating-documentation.html#specifying-language-for-examples)). Default: `["bash", "javascript"]` 
  
 ##  `faker_seed`
 When generating example requests, this package uses fzanninoto/faker to generate random values. If you would like the package to generate the same example values for parameters on each run, set this to any number (eg. 1234). (Note: alternatively, you can set example values for parameters when [documenting them.](documenting.html#specifying-request-parameters))
@@ -173,10 +176,8 @@ return [
 ```
 
 ### `include` and `exclude`
-The `include` key holds an array of route names which should be included in this group, *even if they do not match the rules in the `match` section*.
-The `exclude` key holds an array of route names which should be excluded from this group, *even if they match the rules in the `match` section*.
-
-> Remember that these two keys work with route *names*, not paths.
+The `include` key holds an array of patterns (route names or paths) which should be included in this group, *even if they do not match the rules in the `match` section*.
+The `exclude` key holds an array of patterns (route names or paths) which should be excluded from this group, *even if they match the rules in the `match` section*.
 
 Using our above sample routes, asuming you wanted to place the `users.list` route in the second group (no Authorization header), here's how you could do it:
 
@@ -206,6 +207,8 @@ return [
   ],
 ];
 ```
+
+These values support wildcards and paths, so you can have `'exclude' => ['users/*']` to exclude all routes with URLs matching the pattern.
 
 ### `apply`
 After defining the routes in `match` (and `include` or `exclude`), `apply` is where you specify the settings to be applied to those routes when generating documentation. There are a bunch of settings you can tweak here:

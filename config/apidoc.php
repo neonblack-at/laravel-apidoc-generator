@@ -14,6 +14,12 @@ return [
     'router' => 'laravel',
 
     /*
+     * The base URL to be used in examples and the Postman collection.
+     * By default, this will be the value of config('app.url').
+     */
+    'base_url' => config('app.url'),
+
+    /*
      * Generate a Postman collection in addition to HTML docs.
      */
     'postman' => [
@@ -201,7 +207,7 @@ return [
 
     /*
      * Example requests for each endpoint will be shown in each of these languages.
-     * Supported options are: bash, javascript, php
+     * Supported options are: bash, javascript, php, python
      * You can add a language of your own, but you must publish the package's views
      * and define a corresponding view for it in the partials/example-requests directory.
      * See https://laravel-apidoc-generator.readthedocs.io/en/latest/generating-documentation.html
@@ -230,4 +236,11 @@ return [
          */
         'serializer' => null,
     ],
+
+    /*
+     * If you would like the package to generate the same example values for parameters on each run,
+     * set this to any number (eg. 1234)
+     *
+     */
+    'faker_seed' => null,
 ];

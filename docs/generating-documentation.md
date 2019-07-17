@@ -18,7 +18,7 @@ The generator automatically creates a Postman collection file, which you can imp
 
 If you don't want to create a Postman collection, set the `postman.enabled` config option to false.
 
-The base URL added to the Postman collection will be the value of the `url` key in your Laravel `config/app.php` file. 
+The base URL used in the Postman collection will be the value of the `base_url` key in your Laravel `config/apidoc.php` file. 
 
 ## Manually modifying the content of the generated documentation
 If you want to modify the content of your generated documentation without changing the routes, go ahead and edit the generated `index.md` file.
@@ -47,7 +47,7 @@ php artisan apidoc:rebuild
  
  This will copy the views files to `\resources\views\vendor\apidoc`.
  
- - Next, create a file called {language-name}.blade.php (for example, python.blade.php) in the partials/example-requests directory. You can then write Markdown with Blade templating that describes how the example request for the language should be rendered. You have the `$route` variable available to you. This variable is an array with the following keys:
+ - Next, create a file called {language-name}.blade.php (for example, ruby.blade.php) in the partials/example-requests directory. You can then write Markdown with Blade templating that describes how the example request for the language should be rendered. You have the `$route` variable available to you. This variable is an array with the following keys:
     - `methods`: an array of the HTTP methods for that route
     - `boundUri`: the complete URL for the route, with any url parameters replaced (/users/{id} -> /users/1)
     - `headers`: key-value array of headers to be sent with route (according to your configuration)

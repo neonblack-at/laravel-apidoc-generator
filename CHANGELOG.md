@@ -13,6 +13,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [3.10.0] - Sunday, 23 June 2019
+### Added
+- `--verbose` flag to show exception encountered when making response calls (https://github.com/mpociot/laravel-apidoc-generator/commit/dc987f296e5a3d073f56c67911b2cb61ae47e9dc)
+
+## [3.9.0] - Saturday, 8 June 2019
+### Modified
+- Postman collections and URLs in example requests now use the `apidoc.base_url` config variable (https://github.com/mpociot/laravel-apidoc-generator/pull/523)
+
+## [3.8.0] - Wednesday, 29 May 2019
+### Added
+- Support for PHP array callable syntax in route action (https://github.com/mpociot/laravel-apidoc-generator/pull/516)
+
+## [3.7.3] - Thursday, 23 May 2019
+### Fixed
+- Added faker_seed (https://github.com/mpociot/laravel-apidoc-generator/commit/d2901e51a68c17066d4dd96054ff5bfdf124945b)
+
+## [3.7.2] - Sunday, 19 May 2019
+### Added
+- Support for URL paths in include/exclude rules (https://github.com/mpociot/laravel-apidoc-generator/pull/507)
+
+## [3.7.1] - Friday, 17 May 2019
+### Fixed
+- Handle exception for no URL::forceRootURL() method in Lumen (https://github.com/mpociot/laravel-apidoc-generator/commit/2146fa114dc18bc32c00b5c5550266d753d5aef3)
+- Url parameter bindings (https://github.com/mpociot/laravel-apidoc-generator/commit/f0dc118c6b7792894bf9baa352d7fc4ca8ca74b5)
+
 ## [3.7.0] - Thursday, 2 May 2019
 ### Added
 - Support for `@queryParams` in Dingo FormRequests (https://github.com/mpociot/laravel-apidoc-generator/pull/506)

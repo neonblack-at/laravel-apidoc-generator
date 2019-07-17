@@ -6,6 +6,7 @@ use Dingo\Api\Dispatcher;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Route;
+use Mpociot\ApiDoc\Tools\Flags;
 use Mpociot\ApiDoc\Tools\Utils;
 use Mpociot\ApiDoc\Tools\Traits\ParamHelpers;
 
@@ -36,6 +37,12 @@ class ResponseCallStrategy
         try {
             $response = [$this->makeApiCall($request)];
         } catch (\Exception $e) {
+            echo 'Exception thrown during response call for ['.implode(',', $route->methods)."] {$route->uri}.\n";
+            if (Flags::$shouldBeVerbose) {
+                Utils::dumpException($e);
+            } else {
+                echo "Run this again with the --verbose flag to see the exception.\n";
+            }
             $response = null;
         } finally {
             $this->finish();
@@ -64,7 +71,7 @@ class ResponseCallStrategy
      *
      * @return Request
      */
-    private function prepareRequest(Route $route, array $rulesToApply, array $bodyParams, array $queryParams)
+    protected function prepareRequest(Route $route, array $rulesToApply, array $bodyParams, array $queryParams)
     {
         $uri = Utils::getFullUrl($route, $rulesToApply['bindings'] ?? []);
         $routeMethods = $this->getMethods($route);
@@ -254,7 +261,7 @@ class ResponseCallStrategy
      *
      * @return \Illuminate\Http\JsonResponse|mixed|\Symfony\Component\HttpFoundation\Response
      */
-    private function makeApiCall(Request $request)
+    protected function makeApiCall(Request $request)
     {
         if (config('apidoc.router') == 'dingo') {
             $response = $this->callDingoRoute($request);
@@ -272,7 +279,7 @@ class ResponseCallStrategy
      *
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    private function callLaravelRoute(Request $request): \Symfony\Component\HttpFoundation\Response
+    protected function callLaravelRoute(Request $request): \Symfony\Component\HttpFoundation\Response
     {
         $kernel = app(\Illuminate\Contracts\Http\Kernel::class);
         $response = $kernel->handle($request);
