@@ -21,6 +21,8 @@ Welcome to the generated API reference.
 <!-- END_INFO -->
 
 #Group A
+
+
 <!-- START_264ee15c728df32e7ca6eedce5e42dcb -->
 ## Example title.
 
@@ -196,6 +198,65 @@ Parameter | Type | Status | Description
     users.*.last_name | string |  optional  | The last name of the user.
 
 <!-- END_a25cb3b490fa579d7d77b386bbb7ec03 -->
+
+<!-- START_5c545aa7f913d84b23ac4cfefc1de659 -->
+## api/withQueryParameters
+> Example request:
+
+```bash
+curl -X GET -G "http://localhost/api/withQueryParameters?location_id=consequatur&user_id=me&page=4&filters=consequatur&url_encoded=%2B+%5B%5D%26%3D" \
+    -H "Authorization: customAuthToken" \
+    -H "Custom-Header: NotSoCustom"
+```
+
+```javascript
+const url = new URL("http://localhost/api/withQueryParameters");
+
+    let params = {
+            "location_id": "consequatur",
+            "user_id": "me",
+            "page": "4",
+            "filters": "consequatur",
+            "url_encoded": "+ []&amp;=",
+        };
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+let headers = {
+    "Authorization": "customAuthToken",
+    "Custom-Header": "NotSoCustom",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
+
+fetch(url, {
+    method: "GET",
+    headers: headers,
+})
+    .then(response => response.json())
+    .then(json => console.log(json));
+```
+
+
+> Example response (200):
+
+```json
+null
+```
+
+### HTTP Request
+`GET api/withQueryParameters`
+
+#### Query Parameters
+
+Parameter | Status | Description
+--------- | ------- | ------- | -----------
+    location_id |  required  | The id of the location.
+    user_id |  required  | The id of the user.
+    page |  required  | The page number.
+    filters |  optional  | The filters.
+    url_encoded |  optional  | Used for testing that URL parameters will be URL-encoded where needed.
+
+<!-- END_5c545aa7f913d84b23ac4cfefc1de659 -->
 
 <!-- START_5c08cc4d72b6e5830f6814c64086e197 -->
 ## api/withAuthTag
