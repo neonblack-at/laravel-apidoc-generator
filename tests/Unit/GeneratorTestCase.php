@@ -4,7 +4,6 @@ namespace Mpociot\ApiDoc\Tests\Unit;
 
 use Orchestra\Testbench\TestCase;
 use Mpociot\ApiDoc\Tools\Generator;
-use Illuminate\Support\Facades\Storage;
 use Mpociot\ApiDoc\Tools\DocumentationConfig;
 use Mpociot\ApiDoc\ApiDocGeneratorServiceProvider;
 
@@ -211,6 +210,39 @@ abstract class GeneratorTestCase extends TestCase
     }
 
     /** @test */
+    public function it_does_not_generate_values_for_excluded_params_and_excludes_them_from_clean_params()
+    {
+        $route = $this->createRoute('GET', '/api/test', 'withExcludedExamples');
+        $parsed = $this->generator->processRoute($route);
+        $cleanBodyParameters = $parsed['cleanBodyParameters'];
+        $cleanQueryParameters = $parsed['cleanQueryParameters'];
+        $bodyParameters = $parsed['bodyParameters'];
+        $queryParameters = $parsed['queryParameters'];
+
+        $this->assertArrayHasKey('included', $cleanBodyParameters);
+        $this->assertArrayNotHasKey('excluded_body_param', $cleanBodyParameters);
+        $this->assertEmpty($cleanQueryParameters);
+
+        $this->assertArraySubset([
+            'included' => [
+                'required' => true,
+                'type' => 'string',
+                'description' => 'Exists in examples.',
+            ],
+            'excluded_body_param' => [
+                'type' => 'integer',
+                'description' => 'Does not exist in examples.',
+            ],
+        ], $bodyParameters);
+
+        $this->assertArraySubset([
+            'excluded_query_param' => [
+                'description' => 'Does not exist in examples.',
+            ],
+        ], $queryParameters);
+    }
+
+    /** @test */
     public function can_parse_route_group()
     {
         $route = $this->createRoute('GET', '/api/test', 'dummy');
@@ -222,10 +254,28 @@ abstract class GeneratorTestCase extends TestCase
     /** @test */
     public function method_can_override_controller_group()
     {
-        $route = $this->createRoute('GET', '/api/test', 'withGroupOverride');
-        $routeGroup = $this->generator->processRoute($route)['groupName'];
+        $route = $this->createRoute('GET', '/group/1', 'withGroupOverride');
+        $parsedRoute = $this->generator->processRoute($route);
+        $this->assertSame('Group B', $parsedRoute['groupName']);
+        $this->assertSame('', $parsedRoute['groupDescription']);
 
-        $this->assertSame('Group B', $routeGroup);
+        $route = $this->createRoute('GET', '/group/2', 'withGroupOverride2');
+        $parsedRoute = $this->generator->processRoute($route);
+        $this->assertSame('Group B', $parsedRoute['groupName']);
+        $this->assertSame('', $parsedRoute['groupDescription']);
+        $this->assertSame('This is also in Group B. No route description. Route title before gropp.', $parsedRoute['title']);
+
+        $route = $this->createRoute('GET', '/group/3', 'withGroupOverride3');
+        $parsedRoute = $this->generator->processRoute($route);
+        $this->assertSame('Group B', $parsedRoute['groupName']);
+        $this->assertSame('', $parsedRoute['groupDescription']);
+        $this->assertSame('This is also in Group B. Route title after group.', $parsedRoute['title']);
+
+        $route = $this->createRoute('GET', '/group/4', 'withGroupOverride4');
+        $parsedRoute = $this->generator->processRoute($route);
+        $this->assertSame('Group C', $parsedRoute['groupName']);
+        $this->assertSame('Group description after group.', $parsedRoute['groupDescription']);
+        $this->assertSame('This is in Group C. Route title before group.', $parsedRoute['title']);
     }
 
     /** @test */
