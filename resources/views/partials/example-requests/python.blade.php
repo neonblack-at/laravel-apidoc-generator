@@ -4,24 +4,20 @@ import json
 
 url = '{{ rtrim($baseUrl, '/') }}/{{ ltrim($route['boundUri'], '/') }}'
 @if(count($route['cleanBodyParameters']))
-payload = {
-	@foreach($route['cleanBodyParameters'] as $attribute => $parameter)
-	    '{{ $attribute }}': '{{ $parameter['value'] }}'@if(!($loop->last)),@endif  {{ !$parameter['required'] ? '# optional' : '' }}
-	@endforeach
-}
+payload = {!! json_encode($route['cleanBodyParameters'], JSON_PRETTY_PRINT) !!}
 @endif
 @if(count($route['cleanQueryParameters']))
-params = {
-	@foreach($route['cleanQueryParameters'] as $attribute => $parameter)
-	    '{{ $attribute }}': '{{ $parameter['value'] }}'@if(!($loop->last)),@endif  {{ !$parameter['required'] ? '# optional' : '' }}
-	@endforeach
+params = {!! \Mpociot\ApiDoc\Tools\Utils::printQueryParamsAsKeyValue($route['cleanQueryParameters'], "'", ":", 2, "{}") !!}
+@endif
+@if(!empty($route['headers']))
+headers = {
+@foreach($route['headers'] as $header => $value)
+  '{{$header}}': '{{$value}}'@if(!($loop->last)),
+@endif
+@endforeach
+
 }
 @endif
-headers = {
-	@foreach($route['headers'] as $header => $value)
-	    '{{$header}}': '{{$value}}'@if(!($loop->last)),@endif
-	@endforeach
-}
-response = requests.request('{{$route['methods'][0]}}', url, headers=headers{{ count($route['cleanBodyParameters']) ? ', json=payload' : '' }}{{ count($route['cleanQueryParameters']) ? ', params=params' : ''}})
+response = requests.request('{{$route['methods'][0]}}', url{{ count($route['headers']) ?', headers=headers' : '' }}{{ count($route['cleanBodyParameters']) ? ', json=payload' : '' }}{{ count($route['cleanQueryParameters']) ? ', params=params' : ''}})
 response.json()
 ```
